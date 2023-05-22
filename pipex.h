@@ -18,7 +18,13 @@ typedef struct s_pack
     int nb_cmd;
     int *pid;
     int fd[2];
-
+    int prev_pipe;
+    char **line_cmd;
+    char **path;
+    char *cmd;
 } t_pack;
+
+char	**ft_split(char const *s, char c);
+int	main(int ac, char **av, char **env);
 
 #endif
