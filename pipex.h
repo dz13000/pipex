@@ -15,6 +15,7 @@ typedef struct s_pack
 	char	*outfile;
 	int		prev_pipe;
 	int		nb_cmd;
+	int 	status;
 	int		*pid;
 	int		fd[2];
 	char	**line_cmd;
