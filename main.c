@@ -8,7 +8,7 @@ void	close_fd(int *fd)
 	*fd = -1;
 }
 
-void	init_value(int ac, char **av, t_pack *pack)
+void	init_value(char **av, t_pack *pack)
 {
 	memset(pack, 0, sizeof(t_pack));
 	pack->prev_pipe = -1;
@@ -22,14 +22,17 @@ void	redirect(t_pack *pack, int i)
 {
 	int	fd;
 
+	fd = -1;
 	if (i == 0)
 	{
 		fd = open(pack->infile, O_RDONLY);
+		fprintf(stderr, "haja3\n");
 		dup2(fd, STDIN_FILENO);
 	}
 	if (i == 1)
 	{
-		fd = open(pack->outfile, O_CREAT | O_TRUNC | O_WRONLY | 0666);
+		fprintf(stderr, "haja3\n");
+		fd = open(pack->outfile, O_CREAT | O_TRUNC | O_WRONLY , 0666);
 		dup2(fd, STDOUT_FILENO);
 	}
 	if (i != 0)
@@ -39,6 +42,13 @@ void	redirect(t_pack *pack, int i)
 	if (i != 1)
 	{
 		dup2(pack->fd[1], STDOUT_FILENO);
+		close(pack->fd[1]);
+	}
+	if (fd != -1)
+	{
+
+		fprintf(stderr, "haja4\n");
+		close(fd);
 	}
 }
 
@@ -49,9 +59,9 @@ void	copy_path(t_pack *pack, char **env)
 	i = 0;
 	while (env[i])
 	{
-		if (strncmp(env[i], "PATH=", 5))
+		if (!strncmp(env[i], "PATH=", 5))
 		{
-			pack->path = ft_split(env[i + 5], ':');
+			pack->path = ft_split(env[i] + 5, ':');
 			if (!pack->path)
             {
 				free(pack->path);
@@ -74,7 +84,10 @@ char *verif_path(t_pack *pack, char **line_cmd)
         tmp = ft_strjoin(pack->path[i], "/");
         ret = ft_strjoin(tmp, line_cmd[0]);
         if (access(ret, F_OK | X_OK))
+		{
+			fprintf(stderr, "ret >> %s\n", ret);
             return(free(tmp), ret);
+		}
         free(tmp);
         free(ret);
         i++;
@@ -94,7 +107,11 @@ void	creat_nino(t_pack *pack, int i, char **env, char *cmd)
     else
         pack->cmd = strdup(pack->line_cmd[0]);
     if (pack->cmd)
+	{
+		printf("haja2\n");
         execve(pack->cmd, pack->line_cmd, env);
+	}
+	exit(1);
 }
 
 void creat_parent(t_pack *pack)
@@ -112,9 +129,10 @@ int	main(int ac, char **av, char **env)
 	int i;
 
 	i = 0;
+	(void)ac;
 	if (ac != 5)
 		return (write(1, "Pas le bon nombre d'arguments\n", 30), 1);
-	init_value(ac, av, &pack);
+	init_value(av, &pack);
 	while (i < 2)
 	{
 		if (i != 1)
