@@ -8,6 +8,22 @@ void	close_fd(int *fd)
 	*fd = -1;
 }
 
+void	close_fd2(t_pack *pack)
+{
+	close_fd(&pack->fd[0]);
+	close_fd(&pack->fd[1]);
+}
+
+void	check_fd(t_pack *pack, int fd)
+{
+	if (fd < 0)
+	{
+		perror("pipex");
+		close_fd2(pack);
+		exit(1);
+	}
+}
+
 void	init_value(char **av, t_pack *pack)
 {
 	memset(pack, 0, sizeof(t_pack));
@@ -21,35 +37,33 @@ void	init_value(char **av, t_pack *pack)
 void	redirect(t_pack *pack, int i)
 {
 	int	fd;
+	char	*buf = NULL;
 
-	fd = -1;
 	if (i == 0)
 	{
 		fd = open(pack->infile, O_RDONLY);
-		fprintf(stderr, "haja3\n");
+		check_fd(pack, fd);
 		dup2(fd, STDIN_FILENO);
+		close_fd(&fd);
 	}
 	if (i == 1)
 	{
-		fprintf(stderr, "haja3\n");
-		fd = open(pack->outfile, O_CREAT | O_TRUNC | O_WRONLY , 0666);
+		fd = open(pack->outfile, O_CREAT | O_TRUNC | O_WRONLY, 0666);
+		check_fd(pack, fd);
 		dup2(fd, STDOUT_FILENO);
+		close_fd(&fd);
 	}
 	if (i != 0)
 	{
 		dup2(pack->prev_pipe, STDIN_FILENO);
+		close_fd(&pack->prev_pipe);
 	}
 	if (i != 1)
 	{
 		dup2(pack->fd[1], STDOUT_FILENO);
 		close(pack->fd[1]);
 	}
-	if (fd != -1)
-	{
-
-		fprintf(stderr, "haja4\n");
-		close(fd);
-	}
+	close_fd2(pack);
 }
 
 void	copy_path(t_pack *pack, char **env)
@@ -63,36 +77,43 @@ void	copy_path(t_pack *pack, char **env)
 		{
 			pack->path = ft_split(env[i] + 5, ':');
 			if (!pack->path)
-            {
+			{
 				free(pack->path);
-                exit(1);
-            }
+				exit(1);
+			}
 		}
 		i++;
 	}
 }
 
-char *verif_path(t_pack *pack, char **line_cmd)
+char	*verif_path(t_pack *pack, char *line_cmd)
 {
-    int i;
-    char *tmp;
-    char *ret;
+	int		i;
+	char	*tmp;
+	char	*ret;
 
-    i = 0;
-    while(pack->path[i])
-    {
-        tmp = ft_strjoin(pack->path[i], "/");
-        ret = ft_strjoin(tmp, line_cmd[0]);
-        if (access(ret, F_OK | X_OK))
+	i = 0;
+	if (pack->path == NULL)
+	{
+		ret = strdup(line_cmd);
+		if (ret == NULL)
+			exit(1);
+		return (ret);
+	}
+	while (pack->path && pack->path[i])
+	{
+		tmp = ft_strjoin(pack->path[i], "/");
+		ret = ft_strjoin(tmp, line_cmd);
+		if (access(ret, F_OK | X_OK))
 		{
 			fprintf(stderr, "ret >> %s\n", ret);
-            return(free(tmp), ret);
+			return (free(tmp), ret);
 		}
-        free(tmp);
-        free(ret);
-        i++;
-    }
-    return (NULL);
+		free(tmp);
+		free(ret);
+		i++;
+	}
+	return (NULL);
 }
 
 void	creat_nino(t_pack *pack, int i, char **env, char *cmd)
@@ -102,19 +123,20 @@ void	creat_nino(t_pack *pack, int i, char **env, char *cmd)
 	if (!strrchr(cmd, '/'))
 	{
 		copy_path(pack, env);
-        pack->cmd = verif_path(&*pack, pack->line_cmd);
+		pack->cmd = verif_path(&*pack, pack->line_cmd[0]);
 	}
-    else
-        pack->cmd = strdup(pack->line_cmd[0]);
-    if (pack->cmd)
+	else
+		pack->cmd = strdup(pack->line_cmd[0]);
+	if (pack->cmd)
 	{
-		printf("haja2\n");
-        execve(pack->cmd, pack->line_cmd, env);
+		fprintf(stderr, "haja2\n");
+		fprintf(stderr,"%s\n", pack->cmd);
+		execve(pack->cmd, pack->line_cmd, env);
 	}
 	exit(1);
 }
 
-void creat_parent(t_pack *pack)
+void	creat_parent(t_pack *pack)
 {
 	close_fd(&pack->fd[1]);
 	if (pack->prev_pipe != -1)
