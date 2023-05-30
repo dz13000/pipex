@@ -37,7 +37,7 @@ void	init_value(char **av, t_pack *pack)
 void	redirect(t_pack *pack, int i)
 {
 	int	fd;
-	char	*buf = NULL;
+	// char	*buf = NULL;
 
 	if (i == 0)
 	{
@@ -104,7 +104,7 @@ char	*verif_path(t_pack *pack, char *line_cmd)
 	{
 		tmp = ft_strjoin(pack->path[i], "/");
 		ret = ft_strjoin(tmp, line_cmd);
-		if (access(ret, F_OK | X_OK))
+		if (!access(ret, F_OK | X_OK))
 		{
 			fprintf(stderr, "ret >> %s\n", ret);
 			return (free(tmp), ret);
@@ -129,10 +129,14 @@ void	creat_nino(t_pack *pack, int i, char **env, char *cmd)
 		pack->cmd = strdup(pack->line_cmd[0]);
 	if (pack->cmd)
 	{
-		fprintf(stderr, "haja2\n");
+		fprintf(stderr, "phaja2\n");
 		fprintf(stderr,"%s\n", pack->cmd);
+		fprintf(stderr,"%s\n", pack->line_cmd[0]);
 		execve(pack->cmd, pack->line_cmd, env);
+		// char *ok[10] = {"wc", "-l"};
+		// execve("/mnt/nfs/homes/cabouzir/bin/wc", ok, env);
 	}
+	fprintf(stderr, "haja2f4r\n");
 	exit(1);
 }
 
