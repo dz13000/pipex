@@ -9,7 +9,7 @@ int	ft_strtab(char *str, char c)
 	j = 1;
 	while (str[i])
 	{
-		if ((str[i] == c) && (i != 0) && (str[i - 1] != c))
+		if ((str[i] == c) && (str[i - 1] != c) && (i != 0))
 			j++;
 		i++;
 	}

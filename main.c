@@ -1,5 +1,28 @@
 #include "pipex.h"
 
+void	ft_free_tab(char **tab)
+{
+	int	j;
+
+	j = 0;
+	while (tab[j])
+		j++;
+	while (j != -1)
+		free(tab[j--]);
+	free(tab);
+}
+
+void	ft_free_all(t_pack *pack)
+{
+	if (pack->path)
+		ft_free_tab(pack->path);
+	if (pack->cmd)
+		free(pack->cmd);
+	if (pack->line_cmd)
+		ft_free_tab(pack->line_cmd);
+	free(pack->pid);
+}
+
 void	close_fd(int *fd)
 {
 	if (*fd == -1)
@@ -20,6 +43,7 @@ void	check_fd(t_pack *pack, int fd)
 	{
 		perror("pipex");
 		close_fd2(pack);
+		ft_free_all(pack);
 		exit(1);
 	}
 }
@@ -37,7 +61,6 @@ void	init_value(char **av, t_pack *pack)
 void	redirect(t_pack *pack, int i)
 {
 	int	fd;
-	// char	*buf = NULL;
 
 	if (i == 0)
 	{
@@ -97,7 +120,7 @@ char	*verif_path(t_pack *pack, char *line_cmd)
 	{
 		ret = strdup(line_cmd);
 		if (ret == NULL)
-			exit(1);
+			ft_free_all(pack);
 		return (ret);
 	}
 	while (pack->path && pack->path[i])
@@ -128,16 +151,12 @@ void	creat_nino(t_pack *pack, int i, char **env, char *cmd)
 	else
 		pack->cmd = strdup(pack->line_cmd[0]);
 	if (pack->cmd)
-	{
-		fprintf(stderr, "phaja2\n");
-		fprintf(stderr,"%s\n", pack->cmd);
-		fprintf(stderr,"%s\n", pack->line_cmd[0]);
 		execve(pack->cmd, pack->line_cmd, env);
-		// char *ok[10] = {"wc", "-l"};
-		// execve("/mnt/nfs/homes/cabouzir/bin/wc", ok, env);
-	}
-	fprintf(stderr, "haja2f4r\n");
-	exit(1);
+	else if (strrchr(pack->line_cmd[0], '/'))
+		printf("%s: No such file or directory\n", pack->line_cmd[0]);
+	else
+		printf("%s: Command not found\n", pack->line_cmd[0]);
+	ft_free_all(pack);
 }
 
 void	creat_parent(t_pack *pack)
@@ -165,7 +184,7 @@ int	main(int ac, char **av, char **env)
 			pipe(pack.fd);
 		pack.pid[i] = fork();
 		if (pack.pid[i] == -1)
-			exit(1);
+			ft_free_all(&pack);
 		if (pack.pid[i] == 0)
 			creat_nino(&pack, i, env, av[i + 2]);
 		else
